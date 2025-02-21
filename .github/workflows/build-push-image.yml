@@ -18,6 +18,6 @@ jobs:
       - name: Build and push Docker image
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
-          docker build -t ghcr.io/xsolsonac/versiontagging:latest -t ghcr.io/xsolsonac/versiontagging:$VERSION .
+          docker build -f docker/Dockerfile -t ghcr.io/xsolsonac/versiontagging:latest -t ghcr.io/xsolsonac/versiontagging:$VERSION .
           docker push ghcr.io/xsolsonac/versiontagging:latest
           docker push ghcr.io/xsolsonac/versiontagging:$VERSION
