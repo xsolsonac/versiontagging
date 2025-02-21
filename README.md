@@ -3,7 +3,9 @@
 En un projecte que utilitza Trunk-Based Development (TBD) amb un repositori GitHub, l'etiquetatge de versions i la generació d'imatges Docker han de seguir un esquema que permeti identificar clarament cada versió de manera única i reproductible.
 
 ✅ Utilitzar SemVer per etiquetar versions.
+
 ✅ Generar imatges Docker amb etiquetes corresponents (latest, vX.Y.Z).
+
 ✅ Automatitzar amb GitHub Actions per garantir un procés eficient i sense errors humans.
 
 ## Estratègia d'etiquetatge de versions
