@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-#      contents: read
+      contents: read
       packages: write
-#      attestations: write
-#      id-token: write
+      attestations: write
+      id-token: write
       
     steps:
       - name: Checkout repository
