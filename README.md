@@ -120,6 +120,68 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 ```
 
+### Vulenarability image scanner
+
+Escaneig de vulnerabilitats de les imatges docker amb Trivy
+
+```yaml
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.push.outputs.digest }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+```
+
+### Attest provenance i SBOM
+
+Requereixen permisos:
+
+```yaml
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+```
+
+```yaml
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Generate SBOM attestation
+        uses: actions/attest-sbom@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: './sbom.json'
+          push-to-registry: true
+```
+
+### Notificacions via Slack per success i failure
+
+```yaml
+      - name: notify slack on failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":pb__failed: Failed to publish a new version of ${{ github.event.inputs.package }}"}' $SLACK_WEBHOOK
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK }}
+
+      - name: notify slack on success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":dance: Successfully published a new version of ${{ github.event.inputs.package }}"}' $SLACK_WEBHOOK
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK }}
+```
+
 ## Bàsics
 
 ### Nginx per test
