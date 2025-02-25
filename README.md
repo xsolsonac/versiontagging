@@ -54,32 +54,70 @@ docker push myapp:v1.2.3
 
 ## ⚡ Automatització amb GitHub Actions
 
-Pots afegir un workflow de GitHub Actions per automatitzar tot el procés. Exemple bàsic:
+Pots afegir un workflow de GitHub Actions per automatitzar tot el procés.
+
+[Publishing and installing a package with GitHub Actions](https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions#upgrading-a-workflow-that-accesses-ghcrio)
+
+* Exemple de generació de imatge (SemVer i latest) i push de la imatge al repositori de Github
+  * *docker/metadata-action*
+    * Extreu la versió el tag de la **versió SemVer** i també per defecte el tag **latest**
+  * *docker/build-push-action*
+    * Requereix que el **GITHUB_TOKEN** disposi del permís `packages : write` per poder fer el push de la imatge
+    * Utilitza les variables **tags** i **labels** obtingudes a l'step *docker/metadata-action*
 
 ```yaml
 name: Build and Push Docker Image
 
 on:
+  workflow_dispatch:
+  release:
+    types: [created]
   push:
     tags:
       - 'v*.*.*'
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
 
-      - name: Build and push Docker image
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          docker build -t myapp:latest -t myapp:$VERSION .
-          docker push myapp:latest
-          docker push myapp:$VERSION
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 ```
 
 ## Bàsics
