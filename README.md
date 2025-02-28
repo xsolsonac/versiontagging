@@ -136,7 +136,7 @@ Escaneig de vulnerabilitats de les imatges docker amb Trivy
           severity: 'CRITICAL,HIGH'
 ```
 
-### Attest provenance i SBOM
+### Attest provenance
 
 Requereixen permisos:
 
@@ -153,14 +153,6 @@ Requereixen permisos:
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
-
-      - name: Generate SBOM attestation
-        uses: actions/attest-sbom@v1
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          sbom-path: './sbom.json'
           push-to-registry: true
 ```
 

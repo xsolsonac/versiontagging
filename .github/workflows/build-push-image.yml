@@ -52,7 +52,11 @@ jobs:
 
       - name: Test
         run: |
-          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
+          container_id=$(docker run --name=test -d -p 80:80 --health-cmd='wget --spider http://localhost/index.html || exit 1' --health-interval=2s  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test) && \
+          sleep 5 && \
+          [ "$(docker inspect --format='{{json .State.Health.Status}}' test | tr -d '\"')" = "healthy" ] && \
+           echo "OK" && docker rm -f "$container_id" || \
+           ( echo "ERROR" && docker rm -f "$container_id" && exit 1 )
 
       - name: Run Trivy vulnerability scanner on test image
         uses: aquasecurity/trivy-action@0.28.0
